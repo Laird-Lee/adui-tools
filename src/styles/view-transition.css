@@ -1,0 +1,99 @@
+/* 可调参数 */
+:root {
+  --vt-theme-duration: 820ms;               /* 统一时长（可调 700–1000ms） */
+  --vt-theme-delay: 60ms;                   /* 可选延迟，让旧视图先略淡出 */
+  --vt-theme-ease: cubic-bezier(.16,1,.3,1);/* 丝滑的加速-减速（近似 easeOutQuint） */
+}
+
+/* 核心 group：控制统一时长与节奏 */
+:root::view-transition-group(page) {
+  animation-duration: var(--vt-theme-duration);
+  animation-timing-function: var(--vt-theme-ease);
+  animation-delay: var(--vt-theme-delay);
+}
+
+/* 仅让 new(page) 执行动画，old(page) 不动画以避免遮挡与错觉 */
+:root::view-transition-old(page),
+:root[theme-mode='dark']::view-transition-old(page),
+:root[theme-eva-00='dark']::view-transition-old(page),
+:root[theme-eva-01='dark']::view-transition-old(page),
+:root[theme-eva-02='dark']::view-transition-old(page) {
+  animation: none;
+  pointer-events: none; /* 防止点击被拦截 */
+  mix-blend-mode: normal;
+}
+
+:root::view-transition-new(page),
+:root[theme-mode='dark']::view-transition-new(page),
+:root[theme-eva-00='dark']::view-transition-new(page),
+:root[theme-eva-01='dark']::view-transition-new(page),
+:root[theme-eva-02='dark']::view-transition-new(page) {
+  mix-blend-mode: normal;
+  pointer-events: none; /* 防止点击被拦截 */
+  will-change: clip-path; /* 性能提示 */
+}
+
+/* 从深色切到浅色（dark -> light） */
+@keyframes dark-to-light {
+  0% {
+    clip-path: polygon(
+      calc((0.14054083 * 100vh) + 100%) 0,
+      calc((0.14054083 * 100vh) + 100%) 0,
+      100% 100%,
+      100% 100%
+    );
+  }
+  to {
+    clip-path: polygon(
+      0 0,
+      calc((0.14054083 * 100vh) + 100%) 0,
+      100% 100%,
+      calc(0.14054083 * -100vh) 100%
+    );
+  }
+}
+
+/* 从浅色切到深色（light -> dark） */
+@keyframes light-to-dark {
+  0% {
+    clip-path: polygon(
+      0 0,
+      0 0,
+      calc(0.14054083 * -100vh) 100%,
+      calc(0.14054083 * -100vh) 100%
+    );
+  }
+  to {
+    clip-path: polygon(
+      0 0,
+      calc((0.14054083 * 100vh) + 100%) 0,
+      100% 100%,
+      calc(0.14054083 * -100vh) 100%
+    );
+  }
+}
+
+/* 默认（即目标是浅色）使用 dark-to-light */
+:root::view-transition-new(page) {
+  animation-name: dark-to-light;
+}
+
+/* 目标是深色时，使用 light-to-dark
+   兼容 theme-mode 与 theme-eva-00/01/02 的写法 */
+:root:is(
+  [theme-mode='dark'],
+  [theme-eva-00='dark'],
+  [theme-eva-01='dark'],
+  [theme-eva-02='dark']
+)::view-transition-new(page) {
+  animation-name: light-to-dark;
+}
+
+/* 无动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  :root::view-transition-group(page),
+  :root::view-transition-new(page),
+  :root::view-transition-old(page) {
+    animation: none !important;
+  }
+}
