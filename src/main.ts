@@ -1,7 +1,7 @@
-import '@/assets/styles/normalize.css'
-import '@/assets/styles/theme-variables.css'
-import '@/assets/styles/view-transition.css'
+import '@/styles/normalize.css'
+import '@/styles/view-transition.css'
 import 'virtual:uno.css'
+import 'virtual:svg-icons-register'
 
 import App from './App.vue'
 

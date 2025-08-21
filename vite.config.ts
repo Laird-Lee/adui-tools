@@ -40,7 +40,6 @@ export default defineConfig(({ mode, command }): UserConfig => {
     server: {
       host: true,
       port: 18888,
-      open: true,
       cors: true,
       strictPort: true,
       proxy: {

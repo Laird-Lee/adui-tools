@@ -4,8 +4,8 @@ import { PluginOption } from 'vite'
 
 export default function createSvgIcon(isBuild: boolean): PluginOption {
   return createSvgIconsPlugin({
-    iconDirs: [path.resolve(process.cwd(), 'src/assets/icons/svg')],
-    symbolId: 'icon-[dir]-[name]',
+    iconDirs: [path.resolve(process.cwd(), 'src/assets/icons/svgs')],
+    symbolId: 'icon-[name]',
     svgoOptions: isBuild
       ? {
           plugins: [

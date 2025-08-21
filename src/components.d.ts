@@ -10,5 +10,17 @@ declare module 'vue' {
   export interface GlobalComponents {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SvgIcon: typeof import('./components/SvgIcon.vue')['default']
+    TBreadcrumb: typeof import('tdesign-vue-next')['Breadcrumb']
+    TBreadcrumbItem: typeof import('tdesign-vue-next')['BreadcrumbItem']
+    TConfigProvider: typeof import('tdesign-vue-next')['ConfigProvider']
+    TContent: typeof import('tdesign-vue-next')['Content']
+    TFooter: typeof import('tdesign-vue-next')['Footer']
+    THeader: typeof import('tdesign-vue-next')['Header']
+    THeadMenu: typeof import('tdesign-vue-next')['HeadMenu']
+    TIcon: typeof import('tdesign-vue-next')['Icon']
+    TLayout: typeof import('tdesign-vue-next')['Layout']
+    TMenuItem: typeof import('tdesign-vue-next')['MenuItem']
+    TSubmenu: typeof import('tdesign-vue-next')['Submenu']
   }
 }

@@ -2,7 +2,9 @@
 
 <template>
   <t-footer>
-    Copyright @ 2019-{{ new Date().getFullYear() }} Tencent. All Rights Reserved
+    <div class="w-full h-full flex justify-center items-center">
+      版权所有 &copy; {{ new Date().getFullYear() }} ADui. 保留所有权利
+    </div>
   </t-footer>
 </template>
 
