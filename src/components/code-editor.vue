@@ -28,6 +28,8 @@ const props = defineProps({
   minimap: { type: Boolean, default: true },
   wordWrap: { type: Boolean, default: true }, // 是否自动换行
   tabSize: { type: Number, default: 2 },
+  showCopy: { type: Boolean, default: true },
+  copyTooltip: { type: String, default: '复制代码' },
 })
 
 const emit = defineEmits<{
@@ -188,44 +190,106 @@ watch(
     updateGutterWidth()
   },
 )
+
+// ---------- 复制按钮 ----------
+const copying = ref(false)
+const copied = ref(false)
+
+const currentCode = () => editorInstance.value?.getValue() ?? props.modelValue ?? ''
+
+async function copyCode() {
+  if (copying.value) return
+  copying.value = true
+  try {
+    const text = currentCode()
+    if (typeof window !== 'undefined' && window.navigator?.clipboard) {
+      await window.navigator.clipboard.writeText(text)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    copied.value = true
+    setTimeout(() => (copied.value = false), 1200)
+  } catch (e) {
+    // 可以在此处做错误提示
+    console.error('复制失败', e)
+  } finally {
+    copying.value = false
+  }
+}
 </script>
 
 <template>
-  <div ref="codeRef" class="code-editor w-full h-full" />
+  <div class="code-editor-wrapper w-full h-full relative">
+    <div ref="codeRef" class="code-editor w-full h-full" />
+    <div class="operation">
+      <t-button
+        v-if="showCopy"
+        :disabled="copying"
+        @click="copyCode"
+        shape="square"
+        variant="base"
+        :theme="copied ? 'success' : 'default'"
+        size="small"
+        block
+      >
+        <template #icon>
+          <t-icon v-if="!copied" name="copy" />
+          <t-icon v-else name="check" />
+        </template>
+        {{ copied ? '已复制' : '复制' }}
+      </t-button>
+    </div>
+  </div>
 </template>
 
 <style scoped lang="less">
-.code-editor {
-  border: 1px solid var(--td-border-color-default);
-  border-radius: var(--td-radius-default);
-  overflow: hidden;
+.code-editor-wrapper {
+  .code-editor {
+    border: 1px solid var(--td-border-color-default);
+    border-radius: var(--td-radius-default);
+    overflow: hidden;
 
-  /* 外发光 */
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--td-brand-color-3) 20%, transparent),
-    0 0 18px 0 color-mix(in srgb, var(--td-brand-color-3) 35%, transparent);
-  transition:
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
+    /* 外发光 */
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--td-brand-color-3) 20%, transparent),
+      0 0 18px 0 color-mix(in srgb, var(--td-brand-color-3) 35%, transparent);
+    transition:
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
 
-  /* 行号栏整高铺底（与 Monaco 实际行号宽同步） */
-  --gutter-width: 48px; /* 初始占位，JS 初始化后覆盖 */
-  --gutter-bg: #ffffff; /* 初始占位，主题变化时覆盖 */
+    /* 行号栏整高铺底（与 Monaco 实际行号宽同步） */
+    --gutter-width: 48px; /* 初始占位，JS 初始化后覆盖 */
+    --gutter-bg: #ffffff; /* 初始占位，主题变化时覆盖 */
 
-  background-image: linear-gradient(
-    to right,
-    var(--gutter-bg) 0,
-    var(--gutter-bg) var(--gutter-width),
-    transparent var(--gutter-width)
-  );
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-}
+    background-image: linear-gradient(
+      to right,
+      var(--gutter-bg) 0,
+      var(--gutter-bg) var(--gutter-width),
+      transparent var(--gutter-width)
+    );
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
 
-.code-editor:hover,
-.code-editor:focus-within {
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--td-brand-color-4) 30%, transparent),
-    0 0 28px 0 color-mix(in srgb, var(--td-brand-color-4) 55%, transparent);
+  .code-editor:hover,
+  .code-editor:focus-within {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--td-brand-color-4) 30%, transparent),
+      0 0 28px 0 color-mix(in srgb, var(--td-brand-color-4) 55%, transparent);
+  }
+
+  .operation {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    z-index: 99999;
+  }
 }
 </style>
