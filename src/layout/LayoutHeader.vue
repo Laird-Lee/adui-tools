@@ -50,6 +50,8 @@ const activeKey = computed(() => route.path)
 const handleChange = (val: MenuValue) => {
   router.push(val as string)
 }
+
+const title = import.meta.env.VITE_APP_TITLE
 </script>
 
 <template>
@@ -62,6 +64,14 @@ const handleChange = (val: MenuValue) => {
         :value="activeKey"
         @change="handleChange"
       >
+        <template #logo>
+          <h1 class="flex items-center">
+            <a href="/" class="flex items-center gap-10px">
+              <img class="w-50px" src="@/assets/images/logo.svg" :alt="title" />
+              <div>{{ title }}</div>
+            </a>
+          </h1>
+        </template>
         <template v-for="item in menus" :key="item.key">
           <t-submenu v-if="item.children && item.children.length" :value="item.key">
             <template #icon>
@@ -72,7 +82,7 @@ const handleChange = (val: MenuValue) => {
             </template>
             <t-menu-item v-for="child in item.children" :key="child.key" :value="child.key">
               <template #icon>
-                <svg-icon v-if="child.icon" :name="child.icon" />
+                <svg-icon v-if="child.icon" :name="child.icon" class-name="mr-5px" />
               </template>
               {{ child.label }}
             </t-menu-item>
@@ -89,4 +99,14 @@ const handleChange = (val: MenuValue) => {
   </t-header>
 </template>
 
-<style scoped></style>
+<style scoped lang="less">
+a.flex {
+  all: unset; /* 移除所有继承和默认样式 */
+  display: flex; /* 重新添加需要的flex布局 */
+  align-items: center; /* 重新添加对齐方式 */
+  gap: 10px; /* 重新添加间距 */
+  text-decoration: none; /* 确保无下划线 */
+  color: inherit; /* 继承父元素文字颜色 */
+  cursor: pointer; /* 保持指针样式 */
+}
+</style>

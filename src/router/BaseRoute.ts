@@ -29,13 +29,13 @@ const BaseRoute: RouteRecordRaw[] = [
         component: () => import('@/views/flutter/index.vue'),
         children: [
           {
-            path: 'response-to-model',
-            name: 'responseToModel',
+            path: 'json-to-model',
+            name: 'jsonToModel',
             meta: {
-              title: '生成数据模型',
+              title: 'JSON转Dart数据模型',
               icon: 'json-parse',
             },
-            component: () => import('@/views/flutter/response-to-model/index.vue'),
+            component: () => import('@/views/flutter/json-to-model/index.vue'),
           },
         ],
       },
