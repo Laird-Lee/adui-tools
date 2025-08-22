@@ -303,9 +303,9 @@ function manualFromJsonValue(f: FieldMeta, key: string): string {
   if (base.startsWith('List<')) {
     const inner = base.slice(5, -1)
     if (isPrimitiveDartBase(inner)) {
-      return `${access} is List ? List<${inner}>.from(${access}) : <${inner}>[]`
+      return `${access} is List? List<${inner}>.from(${access}) : <${inner}>[]`
     } else {
-      return `${access} is List ? (${access} as List).map((e) => ${inner}.fromJson(Map<String, dynamic>.from(e as Map))).toList() : <${inner}>[]`
+      return `${access} is List? (${access} as List).map((e) => ${inner}.fromJson(Map<String, dynamic>.from(e as Map))).toList() : <${inner}>[]`
     }
   }
   if (!isPrimitiveDartBase(base)) {
@@ -441,7 +441,7 @@ const handleToJson = () => {
   }
 
   // 粗略解析 Dart 类字段（首个 class）
-  const classMatch = dart.match(/class\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{([\s\S]*?)\n\}/m)
+  const classMatch = dart.match(/class\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{([\s\S]*?)\n}/m)
   if (!classMatch) {
     jsonStr.value = '// 未找到 Dart 类定义'
     return
@@ -449,7 +449,7 @@ const handleToJson = () => {
   const body = classMatch[2]
   // 捕获形如：@JsonKey(name: 'xxx') 可选行 + final Type? name;
   const fieldRegex =
-    /(?:@JsonKey\s*\(\s*name\s*:\s*'([^']+)'\s*\)\s*)?\s*final\s+([A-Za-z0-9_<>\?]+)\s+([A-Za-z_][A-Za-z0-9_]*)\s*;/g
+    /(?:@JsonKey\s*\(\s*name\s*:\s*'([^']+)'\s*\)\s*)?\s*final\s+([A-Za-z0-9_<>?]+)\s+([A-Za-z_][A-Za-z0-9_]*)\s*;/g
   const obj: Record<string, unknown> = {}
   let m: RegExpExecArray | null
   while ((m = fieldRegex.exec(body))) {
