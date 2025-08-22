@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { MenuValue } from 'tdesign-vue-next'
+import type { MenuValue, RadioValue } from 'tdesign-vue-next'
+import { withViewTransition } from '@/utils/view-transition.ts'
+import { LogoGithubFilledIcon } from 'tdesign-icons-vue-next'
 
 type RouteMeta = { title: string; icon?: string; hidden?: boolean; [k: string]: unknown }
 type MenuNode = {
@@ -52,6 +54,15 @@ const handleChange = (val: MenuValue) => {
 }
 
 const title = import.meta.env.VITE_APP_TITLE
+
+const handleChangeModel = (val: RadioValue) => {
+  console.log(val)
+  if (val === 'dark') {
+    withViewTransition(() => document.documentElement.setAttribute('theme-mode', 'dark'))
+  } else {
+    withViewTransition(() => document.documentElement.removeAttribute('theme-mode'))
+  }
+}
 </script>
 
 <template>
@@ -93,6 +104,27 @@ const title = import.meta.env.VITE_APP_TITLE
             </template>
             {{ item.label }}
           </t-menu-item>
+        </template>
+        <template #operations>
+          <div class="flex items-center gap-10px">
+            <t-button
+              shape="circle"
+              variant="text"
+              tag="a"
+              href="https://github.com/Laird-Lee/adui-tools"
+              target="_blank"
+            >
+              <template #icon><logo-github-filled-icon /></template>
+            </t-button>
+            <t-radio-group
+              variant="default-filled"
+              default-value="light"
+              @change="handleChangeModel"
+            >
+              <t-radio-button value="light"><t-icon name="sunny"></t-icon></t-radio-button>
+              <t-radio-button value="dark"><t-icon name="moon"></t-icon></t-radio-button>
+            </t-radio-group>
+          </div>
         </template>
       </t-head-menu>
     </div>
