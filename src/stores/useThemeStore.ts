@@ -62,6 +62,7 @@ const useThemeStore = defineStore(
         await applyTheme(val, useTransition)
         if (isFirstApply.value) isFirstApply.value = false
       },
+      { immediate: true },
     )
 
     // 操作方法（状态更新，主题应用由上面的 watcher 统一处理）

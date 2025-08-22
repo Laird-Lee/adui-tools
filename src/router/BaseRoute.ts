@@ -33,7 +33,6 @@ const BaseRoute: RouteRecordRaw[] = [
             name: 'jsonToModel',
             meta: {
               title: 'JSON 转 Dart 数据模型',
-              icon: 'json-parse',
             },
             component: () => import('@/views/flutter/json-to-model/index.vue'),
           },

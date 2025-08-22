@@ -12,8 +12,6 @@
 
 <style lang="less">
 .app-container {
-  width: 100vw;
-  height: 100vh;
   view-transition-name: page;
 }
 </style>

@@ -21,6 +21,7 @@ const themeName = computed(() =>
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
+  placeholder: { type: String, default: '' },
   language: { type: String, default: 'javascript' },
   readOnly: { type: Boolean, default: false },
   lineNumbers: { type: Boolean, default: true },
@@ -74,6 +75,7 @@ function createEditor() {
 
   editorInstance.value = monaco.editor.create(el, {
     value: props.modelValue ?? '',
+    placeholder: props.placeholder ?? '请输入代码',
     language: props.language,
     theme: themeName.value, // 跟随全局主题
     readOnly: props.readOnly,

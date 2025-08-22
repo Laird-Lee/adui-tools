@@ -37,12 +37,12 @@
   mix-blend-mode: normal;
 }
 :root::view-transition-old(page),
-:root[theme-mode='dark']::view-transition-old(page) {
+:root[theme-eva-01='dark']::view-transition-old(page) {
   animation: none;
 }
 :root::view-transition-new(page) {
   animation-name: dark-to-light;
 }
-:root[theme-mode='dark']::view-transition-new(page) {
+:root[theme-eva-01='dark']::view-transition-new(page) {
   animation-name: light-to-dark;
 }

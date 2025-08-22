@@ -1,5 +1,6 @@
 import '@/styles/normalize.css'
 import '@/styles/view-transition.css'
+import '@/styles/theme-variables.css'
 import 'virtual:uno.css'
 import 'virtual:svg-icons-register'
 

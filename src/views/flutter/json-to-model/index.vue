@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { FormInstanceFunctions, FormProps } from 'tdesign-vue-next'
 
-const jsonStr = ref<string>('')
-const dartStr = ref<string>('')
+const jsonStr = ref<string>(``)
+const dartStr = ref<string>(``)
 
 const classFormRef = ref<FormInstanceFunctions | null>(null)
 const classForm = ref({

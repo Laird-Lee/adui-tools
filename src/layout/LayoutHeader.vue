@@ -92,7 +92,7 @@ const handleChangeModel = (val: RadioValue) => {
             </template>
             <t-menu-item v-for="child in item.children" :key="child.key" :value="child.key">
               <template #icon>
-                <svg-icon v-if="child.icon" :name="child.icon" class-name="mr-5px" />
+                <svg-icon v-if="child.icon" :name="child.icon" class-name="mr-5px" size="1.5em" />
               </template>
               {{ child.label }}
             </t-menu-item>
