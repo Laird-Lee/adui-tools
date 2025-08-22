@@ -11,7 +11,6 @@ export function applyTheme(model: ThemeModel, useTransition = true) {
   if (typeof document === 'undefined') return
   const runner = () => {
     const html = document.documentElement
-    console.log(model)
     if (model === 'dark') {
       html.setAttribute('theme-eva-01', 'dark')
       html.style.colorScheme = 'dark'

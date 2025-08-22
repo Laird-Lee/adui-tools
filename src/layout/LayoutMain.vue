@@ -1,16 +1,28 @@
 <script setup lang="ts">
 const route = useRoute()
 
-const breadcrumb = computed(() => route.matched.filter((r) => !r.meta.hidden))
-console.log(breadcrumb.value)
+const breadcrumb = computed(() => [
+  {
+    path: '/home',
+    name: 'home',
+    meta: {
+      title: '首页',
+      icon: 'home',
+    },
+  },
+  ...route.matched.filter((r) => !r.meta.hidden),
+])
 </script>
 
 <template>
   <t-content>
     <div class="layout-container">
-      <div class="mt-20px mb-20px flex items-center">
+      <div v-if="route.name !== 'home'" class="mt-20px mb-20px flex items-center">
         <div>当前位置：</div>
         <t-breadcrumb>
+          <template #separator>
+            <t-icon name="gesture-right"></t-icon>
+          </template>
           <t-breadcrumb-item v-for="item in breadcrumb" :key="item.path" :to="item.path">
             <template v-if="item.meta.icon" #icon>
               <svg-icon class-name="mr-5px" :name="item.meta.icon as string" />
