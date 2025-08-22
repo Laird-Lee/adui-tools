@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "author": "adui",
+  "repository": "git@github.com:Laird-Lee/adui-tools.git",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },

@@ -34,7 +34,7 @@
 
 ## 在线体验
 
-- 项目地址（GitHub）：https://github.com/Laird-Lee/adui-tools
+- 项目地址（[Vercel](https://vercel.com)）：https://adui-tools.vercel.app
 - 本地运行请参考下方“本地开发”
 
 ## 本地开发
