@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { MenuValue, RadioValue } from 'tdesign-vue-next'
-import { withViewTransition } from '@/utils/view-transition.ts'
 import { LogoGithubFilledIcon } from 'tdesign-icons-vue-next'
+import useThemeStore from '@/stores/useThemeStore.ts'
 
 type RouteMeta = { title: string; icon?: string; hidden?: boolean; [k: string]: unknown }
 type MenuNode = {
@@ -55,13 +55,12 @@ const handleChange = (val: MenuValue) => {
 
 const title = import.meta.env.VITE_APP_TITLE
 
+const themeStore = useThemeStore()
+
+const activeModel = computed(() => themeStore.effectiveModel)
+
 const handleChangeModel = (val: RadioValue) => {
-  console.log(val)
-  if (val === 'dark') {
-    withViewTransition(() => document.documentElement.setAttribute('theme-mode', 'dark'))
-  } else {
-    withViewTransition(() => document.documentElement.removeAttribute('theme-mode'))
-  }
+  themeStore.setModel(val as 'light' | 'dark')
 }
 </script>
 
@@ -118,7 +117,7 @@ const handleChangeModel = (val: RadioValue) => {
             </t-button>
             <t-radio-group
               variant="default-filled"
-              default-value="light"
+              :value="activeModel"
               @change="handleChangeModel"
             >
               <t-radio-button value="light"><t-icon name="sunny"></t-icon></t-radio-button>

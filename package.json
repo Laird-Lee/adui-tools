@@ -19,6 +19,7 @@
     "animate.css": "^4.1.1",
     "dayjs": "^1.11.13",
     "lodash-es": "^4.17.21",
+    "monaco-editor": "^0.52.2",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.5.0",
     "tdesign-icons-vue-next": "^0.3.7",
@@ -49,6 +50,7 @@
     "vite": "^7.0.6",
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-html": "^3.2.2",
+    "vite-plugin-monaco-editor-esm": "^2.0.2",
     "vite-plugin-svg-icons": "^2.0.1",
     "vite-plugin-vue-devtools": "^8.0.0",
     "vue-tsc": "^3.0.4"

@@ -8,6 +8,7 @@ import createComponentsPlugin from './components'
 import createCompression from './compression'
 import createDevToolsPlugin from './dev-tools'
 import { EnvConfig } from '../vite.config'
+import createMonacoEditorPlugin from './monaco-editor'
 
 export interface VitePluginOptions {
   enableDevTools?: boolean
@@ -28,6 +29,7 @@ export default function createVitePlugin(
     createHTMLPlugin(env),
     createSvgIcon(isBuild),
     ...createComponentsPlugin(),
+    createMonacoEditorPlugin(),
   ]
 
   // 开发环境插件
