@@ -28,6 +28,7 @@ declare module 'vue' {
     TInput: typeof import('tdesign-vue-next')['Input']
     TLayout: typeof import('tdesign-vue-next')['Layout']
     TMenuItem: typeof import('tdesign-vue-next')['MenuItem']
+    TRadio: typeof import('tdesign-vue-next')['Radio']
     TRadioButton: typeof import('tdesign-vue-next')['RadioButton']
     TRadioGroup: typeof import('tdesign-vue-next')['RadioGroup']
     TRow: typeof import('tdesign-vue-next')['Row']

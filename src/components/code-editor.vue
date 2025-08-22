@@ -83,6 +83,7 @@ function createEditor() {
     tabSize: props.tabSize,
     automaticLayout: false,
     scrollbar: { verticalScrollbarSize: 12, horizontalScrollbarSize: 12 },
+    scrollBeyondLastLine: false,
 
     // JetBrains 字体
     fontFamily:
@@ -90,6 +91,7 @@ function createEditor() {
     fontLigatures: false,
     fontSize: 14,
     lineHeight: 22,
+    padding: { top: 0, bottom: 0 },
   })
 
   // 初始同步 gutter

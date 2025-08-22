@@ -8,6 +8,7 @@ const classFormRef = ref<FormInstanceFunctions | null>(null)
 const classForm = ref({
   fileName: '',
   className: '',
+  needJsonSerializable: true,
 })
 
 const rules: FormProps['rules'] = {
@@ -28,7 +29,7 @@ function toClassName(fileName: string) {
     .join('')
 }
 
-// ---------------- 工具：JSON -> Dart 代码生成（带 @JsonSerializable） ----------------
+// ---------------- 工具：JSON <-> Dart 代码生成 ----------------
 type Json = null | boolean | number | string | Json[] | { [key: string]: Json }
 
 function pascal(name: string): string {
@@ -122,7 +123,7 @@ function inferType(
       }
       if (isPlainObject(v)) {
         const className = uniqueClassName(pascal(hint || 'Object'), used)
-        buildClass(className, v, classes, used)
+        buildClass(className, v, classes, used, undefined, classForm.value.needJsonSerializable)
         return { type: className, baseType: className, nullable: false }
       }
       return { type: 'dynamic', baseType: 'dynamic', nullable: false }
@@ -164,18 +165,24 @@ function collectFields(
   return metas
 }
 
-function renderClass(className: string, fields: FieldMeta[], fileBase?: string): string {
-  const header = fileBase
+// ---------- 渲染（可选 @JsonSerializable） ----------
+function renderRootClass(
+  className: string,
+  fields: FieldMeta[],
+  fileBase: string,
+  needAnno: boolean,
+): string {
+  const header = needAnno
     ? `import 'package:json_annotation/json_annotation.dart';
 
 part '${fileBase}.g.dart';`
-    : `import 'package:json_annotation/json_annotation.dart';`
+    : `// 可选：如需使用 json_serializable，请开启选项并确保依赖已添加`
 
-  const deco = '@JsonSerializable()'
+  const deco = needAnno ? '@JsonSerializable()' : ''
 
   const fieldDecls = fields
     .map((f) => {
-      const jsonKeyLine = f.needsJsonKey ? `  @JsonKey(name: '${f.jsonKey}')\n` : ''
+      const jsonKeyLine = needAnno && f.needsJsonKey ? `  @JsonKey(name: '${f.jsonKey}')\n` : ''
       return `${jsonKeyLine}  final ${f.type} ${f.dartName};`
     })
     .join('\n')
@@ -184,8 +191,14 @@ part '${fileBase}.g.dart';`
     .map((f) => (f.nullable ? `    this.${f.dartName},` : `    required this.${f.dartName},`))
     .join('\n')
 
-  const fromJson = `  factory ${className}.fromJson(Map<String, dynamic> json) => _$${className}FromJson(json);`
-  const toJson = `  Map<String, dynamic> toJson() => _$${className}ToJson(this);`
+  const fromJson = needAnno
+    ? `  factory ${className}.fromJson(Map<String, dynamic> json) => _$${className}FromJson(json);`
+    : renderManualFromJsonSig(className) +
+      '\n' +
+      indent(renderManualFromJsonBody(className, fields), 2)
+  const toJson = needAnno
+    ? `  Map<String, dynamic> toJson() => _$${className}ToJson(this);`
+    : renderManualToJsonSig() + '\n' + indent(renderManualToJsonBody(fields), 2)
 
   return `${header}
 
@@ -203,12 +216,12 @@ ${toJson}
 }`
 }
 
-function renderNestedClass(className: string, fields: FieldMeta[]): string {
-  const deco = '@JsonSerializable()'
+function renderNestedClass(className: string, fields: FieldMeta[], needAnno: boolean): string {
+  const deco = needAnno ? '@JsonSerializable()' : ''
 
   const fieldDecls = fields
     .map((f) => {
-      const jsonKeyLine = f.needsJsonKey ? `  @JsonKey(name: '${f.jsonKey}')\n` : ''
+      const jsonKeyLine = needAnno && f.needsJsonKey ? `  @JsonKey(name: '${f.jsonKey}')\n` : ''
       return `${jsonKeyLine}  final ${f.type} ${f.dartName};`
     })
     .join('\n')
@@ -217,8 +230,14 @@ function renderNestedClass(className: string, fields: FieldMeta[]): string {
     .map((f) => (f.nullable ? `    this.${f.dartName},` : `    required this.${f.dartName},`))
     .join('\n')
 
-  const fromJson = `  factory ${className}.fromJson(Map<String, dynamic> json) => _$${className}FromJson(json);`
-  const toJson = `  Map<String, dynamic> toJson() => _$${className}ToJson(this);`
+  const fromJson = needAnno
+    ? `  factory ${className}.fromJson(Map<String, dynamic> json) => _$${className}FromJson(json);`
+    : renderManualFromJsonSig(className) +
+      '\n' +
+      indent(renderManualFromJsonBody(className, fields), 2)
+  const toJson = needAnno
+    ? `  Map<String, dynamic> toJson() => _$${className}ToJson(this);`
+    : renderManualToJsonSig() + '\n' + indent(renderManualToJsonBody(fields), 2)
 
   return `${deco}
 class ${className} {
@@ -234,30 +253,109 @@ ${toJson}
 }`
 }
 
+// ---------- 手写 fromJson / toJson ----------
+function renderManualFromJsonSig(className: string) {
+  return `  factory ${className}.fromJson(Map<String, dynamic> json) {`
+}
+function renderManualToJsonSig() {
+  return `  Map<String, dynamic> toJson() {`
+}
+function renderManualFromJsonBody(className: string, fields: FieldMeta[]) {
+  const lines: string[] = []
+  lines.push(`return ${className}(`)
+  for (const f of fields) {
+    const key = f.needsJsonKey ? f.jsonKey : f.dartName
+    lines.push(`  ${f.dartName}: ${manualFromJsonValue(f, key)},`)
+  }
+  lines.push(`);`)
+  lines.push(`}`)
+  return lines.join('\n')
+}
+function renderManualToJsonBody(fields: FieldMeta[]) {
+  const lines: string[] = []
+  lines.push(`return {`)
+  for (const f of fields) {
+    const key = f.needsJsonKey ? f.jsonKey : f.dartName
+    lines.push(`  '${key}': ${manualToJsonValue(f)},`)
+  }
+  lines.push(`};`)
+  lines.push(`}`)
+  return lines.join('\n')
+}
+function isPrimitiveDartBase(t: string): boolean {
+  return t === 'int' || t === 'double' || t === 'bool' || t === 'String' || t === 'dynamic'
+}
+function manualToJsonValue(f: FieldMeta): string {
+  const base = f.baseType
+  if (base.startsWith('List<')) {
+    const inner = base.slice(5, -1)
+    if (isPrimitiveDartBase(inner)) return f.dartName
+    return `${f.dartName}${f.type.endsWith('?') ? '?.' : '.'}map((e) => e.toJson()).toList()`
+  }
+  if (!isPrimitiveDartBase(base)) {
+    return `${f.dartName}${f.type.endsWith('?') ? '?.toJson()' : '.toJson()'}`
+  }
+  return f.dartName
+}
+function manualFromJsonValue(f: FieldMeta, key: string): string {
+  const base = f.baseType
+  const access = `json['${key}']`
+  if (base.startsWith('List<')) {
+    const inner = base.slice(5, -1)
+    if (isPrimitiveDartBase(inner)) {
+      return `${access} is List ? List<${inner}>.from(${access}) : <${inner}>[]`
+    } else {
+      return `${access} is List ? (${access} as List).map((e) => ${inner}.fromJson(Map<String, dynamic>.from(e as Map))).toList() : <${inner}>[]`
+    }
+  }
+  if (!isPrimitiveDartBase(base)) {
+    return `${access} == null ? null : ${base}.fromJson(Map<String, dynamic>.from(${access} as Map))`
+  }
+  switch (base) {
+    case 'int':
+      return `(${access} is int) ? ${access} as int : (${access} is num ? (${access} as num).toInt() : (int.tryParse(${access}?.toString() ?? '') ))`
+    case 'double':
+      return `(${access} is double) ? ${access} as double : (${access} is num ? (${access} as num).toDouble() : (double.tryParse(${access}?.toString() ?? '') ))`
+    case 'bool':
+      return `(${access} is bool) ? ${access} as bool : (${access}?.toString() == 'true')`
+    case 'String':
+      return `${access}?.toString()`
+    default:
+      return access
+  }
+}
+function indent(s: string, n = 2) {
+  const pad = ' '.repeat(n)
+  return s
+    .split('\n')
+    .map((l) => (l.length ? pad + l : l))
+    .join('\n')
+}
+
+// ---------- 构建类 ----------
 function buildClass(
   className: string,
   data: Json,
   classes: string[],
   used: Set<string>,
   fileBaseForRoot?: string,
+  needAnno = true,
 ) {
-  // 根为数组：包装 items 字段
   if (Array.isArray(data)) {
     const inf = analyzeListType(data, used, classes, className + 'Item')
     const fields: FieldMeta[] = [
       {
         jsonKey: 'items',
         dartName: 'items',
-        type: inf.type,
+        type: inf.baseType, // 对数组根场景，可直接用 List<...>
         baseType: inf.baseType,
         nullable: false,
         needsJsonKey: false,
       },
     ]
-    classes.push(renderNestedClass(className, fields))
+    classes.push(renderNestedClass(className, fields, needAnno))
     return
   }
-  // 单值包装
   if (!isPlainObject(data)) {
     const inf = inferType(data, used, classes, className + 'Value')
     const fields: FieldMeta[] = [
@@ -270,15 +368,14 @@ function buildClass(
         needsJsonKey: false,
       },
     ]
-    classes.push(renderNestedClass(className, fields))
+    classes.push(renderNestedClass(className, fields, needAnno))
     return
   }
   const fields = collectFields(data, used, classes, className)
-  // 根类带上 import/part，子类不重复 import/part
   if (fileBaseForRoot) {
-    classes.push(renderClass(className, fields, fileBaseForRoot))
+    classes.push(renderRootClass(className, fields, fileBaseForRoot, needAnno))
   } else {
-    classes.push(renderNestedClass(className, fields))
+    classes.push(renderNestedClass(className, fields, needAnno))
   }
 }
 
@@ -286,6 +383,7 @@ function generateDartFromJson(
   jsonStrLocal: string,
   rootClass: string,
   fileNameBase: string,
+  needAnno: boolean,
 ): string {
   const data = tryParseJson(jsonStrLocal)
   if (typeof data === 'undefined') {
@@ -294,18 +392,12 @@ function generateDartFromJson(
   const used = new Set<string>()
   const classes: string[] = []
   const rootName = uniqueClassName(pascal(rootClass), used)
-
-  // 先构建依赖类，最后压入根类（buildClass 内部会根据遇到的对象先递归构建）
-  buildClass(rootName, data as Json, classes, used, fileNameBase)
-
-  // 将根类放在最后一段（有 import/part）
-  // 当前实现：root 已带 header，其他类不带；按照构建顺序 classes 已包含所有类
-  // 我们把带 import 的类放在最上面，其余类跟在后面
+  buildClass(rootName, data as Json, classes, used, fileNameBase, needAnno)
   const rootWithHeader = classes.pop()!
   return [rootWithHeader, ...classes].join('\n\n')
 }
 
-// ---------------- 生成按钮：jsonStr -> dartStr ----------------
+// ---------------- 生成：jsonStr -> dartStr ----------------
 const handleToDart = async () => {
   const valid = await classFormRef.value?.validate()
   if (valid !== true) return
@@ -315,18 +407,84 @@ const handleToDart = async () => {
   }
   const fileBase = classForm.value.fileName.replace(/\.dart$/i, '')
   const cls = classForm.value.className || pascal(fileBase || 'Root')
-  dartStr.value = generateDartFromJson(jsonStr.value, cls, fileBase)
+  dartStr.value = generateDartFromJson(
+    jsonStr.value,
+    cls,
+    fileBase,
+    classForm.value.needJsonSerializable,
+  )
+}
+
+// ---------------- 反向：dartStr/jsonStr -> jsonStr（智能处理） ----------------
+/*
+  规则：
+  - 若 jsonStr 非空：尝试解析并美化为 2 空格缩进
+  - 若 jsonStr 为空且 dartStr 非空：从 dart 类（首个 class）中提取字段，生成一个 JSON 骨架
+*/
+const handleToJson = () => {
+  const raw = jsonStr.value?.trim()
+  if (raw) {
+    const parsed = tryParseJson(raw)
+    if (typeof parsed === 'undefined') {
+      // 保持原文，提示
+      jsonStr.value = `// JSON 解析失败，请检查输入\n` + raw
+      return
+    }
+    jsonStr.value = JSON.stringify(parsed, null, 2)
+    return
+  }
+
+  const dart = dartStr.value?.trim()
+  if (!dart) {
+    jsonStr.value = '// 没有可转换的内容'
+    return
+  }
+
+  // 粗略解析 Dart 类字段（首个 class）
+  const classMatch = dart.match(/class\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{([\s\S]*?)\n\}/m)
+  if (!classMatch) {
+    jsonStr.value = '// 未找到 Dart 类定义'
+    return
+  }
+  const body = classMatch[2]
+  // 捕获形如：@JsonKey(name: 'xxx') 可选行 + final Type? name;
+  const fieldRegex =
+    /(?:@JsonKey\s*\(\s*name\s*:\s*'([^']+)'\s*\)\s*)?\s*final\s+([A-Za-z0-9_<>\?]+)\s+([A-Za-z_][A-Za-z0-9_]*)\s*;/g
+  const obj: Record<string, unknown> = {}
+  let m: RegExpExecArray | null
+  while ((m = fieldRegex.exec(body))) {
+    const jsonKey = m[1] || m[3]
+    const type = m[2].replace(/\?$/, '')
+    obj[jsonKey] = defaultValueByType(type)
+  }
+  jsonStr.value = JSON.stringify(obj, null, 2)
+}
+
+function defaultValueByType(t: string): unknown {
+  if (/^List<.*>$/.test(t)) return []
+  if (t === 'int' || t === 'double') return 0
+  if (t === 'bool') return false
+  if (t === 'String') return ''
+  if (t === 'dynamic') return null
+  // 自定义类 -> 用对象骨架占位
+  return {}
 }
 </script>
 
 <template>
   <div class="w-full container-h">
     <div class="h-full flex items-center justify-between">
-      <div class="w-690px h-full flex flex-col gap-20px">
-        <t-form ref="classFormRef" :data="classForm" :rules="rules" label-align="top">
+      <div class="w-670px h-full flex flex-col gap-20px">
+        <t-form
+          ref="classFormRef"
+          :data="classForm"
+          :rules="rules"
+          label-align="top"
+          :required-mark="false"
+        >
           <t-row :gutter="[20, 20]">
-            <t-col :span="6">
-              <t-form-item label="文件名称" name="fileName" tips="例子：repair_list_response.dart">
+            <t-col :span="4">
+              <t-form-item label="文件名称" name="fileName" tips="例：repair_list_response.dart">
                 <t-input
                   v-model="classForm.fileName"
                   placeholder="请输入文件名称"
@@ -335,9 +493,17 @@ const handleToDart = async () => {
                 />
               </t-form-item>
             </t-col>
-            <t-col :span="6">
-              <t-form-item label="实现类名" name="className" tips="例子：RepairListResponse">
+            <t-col :span="4">
+              <t-form-item label="实现类名" name="className" tips="例：RepairListResponse">
                 <t-input v-model="classForm.className" placeholder="请输入要实现的类名" clearable />
+              </t-form-item>
+            </t-col>
+            <t-col :span="4">
+              <t-form-item label="是否需要@JsonSerializable()" name="needJsonSerializable">
+                <t-radio-group v-model="classForm.needJsonSerializable">
+                  <t-radio :value="true">是</t-radio>
+                  <t-radio :value="false">否</t-radio>
+                </t-radio-group>
               </t-form-item>
             </t-col>
           </t-row>
@@ -350,13 +516,13 @@ const handleToDart = async () => {
             <t-icon name="arrow-right" />
           </template>
         </t-button>
-        <t-button block variant="outline">
+        <t-button block variant="outline" @click="handleToJson">
           <template #icon>
             <t-icon name="arrow-left" />
           </template>
         </t-button>
       </div>
-      <div class="w-690px h-full flex flex-col">
+      <div class="w-670px h-full flex flex-col">
         <code-editor v-model="dartStr" language="dart" />
       </div>
     </div>
