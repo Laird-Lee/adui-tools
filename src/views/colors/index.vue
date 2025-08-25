@@ -324,7 +324,13 @@ function transformColor(sourceType: string, targetType: string, value: string) {
     <div class="flex-1">
       <div v-for="item in mainColorType" :key="item.type" class="p-12px rounded border">
         <div class="mb-8px font-500">{{ item.type }}</div>
-        <t-input v-model="item.value" :placeholder="`请输入 ${item.type} 色值`" clearable />
+        <t-input-adornment>
+          <template #prepend>
+            <div class="color-prepend" :style="{ backgroundColor: item.value }"></div>
+          </template>
+          <t-input v-model="item.value" :placeholder="`请输入 ${item.type} 色值`" clearable />
+        </t-input-adornment>
+
         <div class="mt-12px grid gap-8px">
           <div
             v-for="type in colorType.filter((c) => c !== item.type)"
@@ -355,4 +361,11 @@ function transformColor(sourceType: string, targetType: string, value: string) {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped lang="less">
+.color-prepend {
+  width: var(--td-comp-size-m);
+  height: 100%;
+  border: 1px solid var(--td-border-color-default);
+  border-radius: var(--td-radius-default);
+}
+</style>
