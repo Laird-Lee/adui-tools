@@ -47,6 +47,25 @@ const BaseRoute: RouteRecordRaw[] = [
         },
         component: () => import('@/views/json/index.vue'),
       },
+      {
+        path: '/markdown',
+        name: 'markdown',
+        meta: {
+          title: 'Markdown',
+          icon: 'markdown',
+        },
+        component: () => import('@/views/markdown/index.vue'),
+        children: [
+          {
+            path: 'editor',
+            name: 'markdownEditor',
+            meta: {
+              title: 'Markdown 编辑器',
+            },
+            component: () => import('@/views/markdown/editor/index.vue'),
+          },
+        ],
+      },
     ],
   },
 ]
