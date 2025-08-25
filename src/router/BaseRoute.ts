@@ -66,6 +66,15 @@ const BaseRoute: RouteRecordRaw[] = [
           },
         ],
       },
+      {
+        path: '/colors',
+        name: 'colors',
+        meta: {
+          title: '色值转换',
+          icon: 'colors',
+        },
+        component: () => import('@/views/colors/index.vue'),
+      },
     ],
   },
 ]
