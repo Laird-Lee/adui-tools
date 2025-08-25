@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import type { FormInstanceFunctions, FormProps } from 'tdesign-vue-next'
+import { MdPreview } from 'md-editor-v3'
+import JsonToModelHelper from '@/views/helper/json-to-model.md?raw'
+import 'md-editor-v3/lib/preview.css'
+import useThemeStore from '@/stores/useThemeStore.ts'
 
 const jsonStr = ref<string>(``)
 const dartStr = ref<string>(``)
@@ -469,6 +473,9 @@ function defaultValueByType(t: string): unknown {
   // 自定义类 -> 用对象骨架占位
   return {}
 }
+
+const helperId = 'json-to-model-helper'
+const themeStore = useThemeStore()
 </script>
 
 <template>
@@ -527,6 +534,18 @@ function defaultValueByType(t: string): unknown {
       </div>
     </div>
   </div>
+  <md-preview
+    class="preview w-full mt-20px pa-20px"
+    :id="helperId"
+    :model-value="JsonToModelHelper"
+    :theme="themeStore.effectiveModel"
+    preview-theme="vuepress"
+  />
 </template>
 
-<style scoped></style>
+<style scoped lang="less">
+.preview {
+  border: 1px solid var(--td-border-color-default);
+  border-radius: var(--td-radius-default);
+}
+</style>
